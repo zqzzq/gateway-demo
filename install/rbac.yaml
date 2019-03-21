@@ -1,0 +1,60 @@
+apiVersion: "rbac.istio.io/v1alpha1"
+kind: RbacConfig
+metadata:
+  name: default
+  namespace: istio-system
+spec:
+  mode: ON_WITH_INCLUSION
+  inclusion:
+    namespaces: [ "health" ]
+
+---
+
+apiVersion: "config.istio.io/v1alpha2"
+kind: authorization
+metadata:
+  name: requestcontext
+  namespace: istio-system
+spec:
+  subject:
+    user: source.user | ""
+    groups: ""
+    properties:
+      app: source.labels["app"] | ""
+      version: source.labels["version"] | ""
+      namespace: source.namespace | ""
+      path: request.path
+      key: request.headers["accesskey"] | ""
+  action:
+    namespace: destination.service.namespace | "default"
+    service: destination.service | ""
+    method: request.method | ""
+    path: request.path | "/"
+    properties:
+      app: destination.labels["app"] | ""
+      version: destination.labels["version"] | ""
+      host: request.host | ""
+
+---
+
+apiVersion: "config.istio.io/v1alpha2"
+kind: rbac
+metadata:
+  name: handler
+  namespace: istio-system
+spec:
+  config_store_url: "k8s://"
+  cacheDuration: 0s
+---
+
+apiVersion: "config.istio.io/v1alpha2"
+kind: rule
+metadata:
+  name: rbaccheck
+  namespace: istio-system
+spec:
+  actions:
+  - handler: handler.rbac
+    instances:
+    - requestcontext.authorization
+  match: destination.service == "istio-egressgateway.istio-system.svc.cluster.local"

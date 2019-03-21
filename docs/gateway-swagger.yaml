@@ -1,0 +1,247 @@
+openapi: 3.0.0
+info:
+  title: service gateway
+  version: 1.0.0
+servers: 
+- url: http://{host}:{port}/api/v1
+  description: gateway server is responsible for agreeing the api request or disagress the authed api request.
+  variables:
+    host:
+      default: '127.0.0.1'
+      description: the host ip which the service will listen on
+    port:
+      default: '8080'
+      description: the host port which the service will listen on
+paths:
+  '/auth/{clientid}/{clientsecret}':
+    post:
+      description: authorize the user with apis
+      requestBody:
+        description: all apis that you want to authorize with the specified clientid 
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/Apis'
+      parameters:
+      - name: clientid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: clientsecret
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: add/update application priviledge successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'
+        default:
+          description: add/update application priviledge failed
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'
+    delete:
+      description: revoke the authorizatin from the specified client
+      parameters:
+      - name: clientid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: clientsecret
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: apiids
+        in: query
+        required: false
+        schema:
+          type: string
+        description: the apiid you want to revoke, if this query parameter is empty, then this method will revoke all the apis belong to the specified user.
+      responses:
+        '200':
+          description: remove client api authorizations successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'
+        default:
+          description: remove client api authorizations failed
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'
+  '/token':
+    get:
+      description: get token(http header 'accesskey' value) by clientid, when user want to use the api, he must first retrieve the token, this method is the token generation method
+      parameters:
+      - name: clientid
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: clientkey
+        in: query
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: get token successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Token'
+        default:
+          description: get token failed
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'    
+  '/log/{clientid}/{apiid}':
+    get:
+      description: Get the api access log info by time range
+      parameters:
+      - name: clientid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: apiid
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: start
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: end
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: step
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: apipath
+        in: query
+        required: true
+        schema:
+          type: string  
+      - name: apihost
+        in: query
+        required: false
+        schema:
+          type: string                    
+      responses:
+        '200':
+          description: Get the api access log info successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/APIAccessLog'
+        default:
+          description: Get the api access log info failed
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Status'                
+components:
+  schemas:
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    Apis:
+      type: array
+      items:
+        $ref: '#/components/schemas/Api'
+    Api:
+      type: object
+      properties:
+        id:
+          type: string
+        methods:
+          type: array
+          items:
+            type: string
+        contexts:
+          type: array
+          items:
+            type: string
+        servicefqdn:
+          type: string
+        external:
+          type: boolean
+        externalhost:
+          type: string
+          description: "the host of external api, be useful for external api only. for example: the access url is https://www.baidu.com/login.jsp, then this field should be 'www.baidu.com'"
+    ApplicationAccount:
+      type: object
+      properties:
+        clientid:
+          type: string
+        clientkey:
+          type: string
+    Token:
+      type: object
+      properties:
+        token:
+          type: string
+    APIAccessLog:
+      type: object
+      properties:
+        apiid:
+          type: integer
+          format: int32
+        accesscount:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIAccessCount'        
+        accesssize:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIAccessSize'               
+    APIAccessCount:         
+      type: object
+      properties:
+        accesstime:
+          type: string
+        step:
+          type: integer
+          format: int32           
+        count:
+          type: integer
+          format: int32                  
+        response:
+          type: string         
+    APIAccessSize:         
+      type: object
+      properties:
+        accesstime:
+          type: string
+        step:
+          type: integer
+          format: int32                           
+        response:
+          type: string
+        size:
+          type: integer
+          format: int32             
+
+        

@@ -1,0 +1,475 @@
+# this is an example of the Uber API
+# as a demonstration of an API spec in YAML
+swagger: '2.0'
+info:
+  title: MALL Demo API
+  description: These APIs provide services for manipulating MALL demo.
+  version: "0.1.0"
+# the domain of the service
+host: 127.0.0.1:8082
+# array of all schemes that your API supports
+schemes:
+  - http
+basePath: /api
+produces:
+  - application/json
+  - text/plain
+consumes:
+  - text/plain
+  - application/json
+paths:
+  /v1/signup:
+    post:
+      summary: Creates a new user account.
+      description: |
+        This endpoint is to create a user if the user does not already exist.
+      parameters:
+        - name: user
+          in: body
+          description: New created user.
+          required: true
+          schema:
+            $ref: '#/definitions/UserDetail'
+      tags:
+        - Products
+      responses:
+        200:
+          description: User created successfully.
+        400:
+          description: Unsatisfied with constraints of the user creation.
+        500:
+          description: Unexpected internal errors.         
+  /v1/login:
+    post:
+      summary: Sign in with available user account.
+      description: |
+        Sign in system with available user account including username/email and password and get the token. 
+      parameters:
+        - name: user
+          in: body
+          description: Available user account.
+          required: true
+          schema:
+            $ref: '#/definitions/UserLogin'
+      tags:
+        - Products
+      responses:
+        200:
+          description: User signed in successfully.
+          schema:
+            $ref: '#/definitions/Token'
+        400:
+          description: Incorrect username or password.
+        500:
+          description: Unexpected internal error.
+  /v1/logout:
+    delete:
+      summary: Log out session for current user account.
+      description: |
+        Log out system with available username. 
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+      tags:
+        - Products
+      responses:
+        200:
+          description: User logged out successfully.
+        400:
+          description: Incorrect username.
+        500:
+          description: Unexpected internal error.
+  /v1/services:
+    get:
+      summary: Return services created by users.
+      description: |
+        This endpoint returns all services created by users.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: services_display_option
+          in: query
+          type: integer
+          format: int32
+          description: 0, display all; 1, display owner; 2 display others.
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return all matched services.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ServiceDetail'
+          headers:
+            X-Total-Count:
+              description: The total count of services.
+              type: integer
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors.
+    post: 
+      summary: Create a new service.
+      description: |
+        This endpoint is to create a new service.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: service
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/ServiceDetail'
+          description: The detail of this servcie.  
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return create service detail.
+          schema:
+            $ref: '#/definitions/ServiceDetail'
+        401:
+          description: User need to log in first.
+        500:
+          description: Unexpected internal errors.
+  /v1/services/{service_id}:
+    get:
+      summary: Return specific service_id detail.
+      description: |
+        This endpoint returns specific service information by service_id ID.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: service_id
+          in: path
+          type: integer
+          format: int32
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return matched service detail.
+          schema:
+            $ref: '#/definitions/ServiceDetail'
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors.  
+    delete:
+      summary: Delete the specific service by service_id.
+      description: |
+        This endpoint to delete the specific service by service_id ID.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: service_id
+          in: path
+          type: integer
+          format: int32
+      tags:
+        - Products
+      responses:
+        200:
+          description: Delete the service successfully.
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors.  
+  /v1/services/authorizations:
+    get:
+      summary: Return list of request for access to services.
+      description: |
+        This endpoint returns list of request for access to services.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return matched service id and key.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AuthorizationRequest'
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+    post:
+      summary: Request for access to services.
+      description: |
+        Request access to services.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: service_id
+          in: query
+          type: integer
+          format: int32
+        - name: service_method
+          in: query
+          type: string
+      tags:
+        - Products
+      responses:
+        200:
+          description: Request successful.
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+    put:
+      summary: Handle the request for access to services.
+      description: |
+        This endpoint handle the request for access to services.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: id
+          in: query
+          type: integer
+          format: int32
+        - name: approve
+          in: query
+          type: integer
+          format: int32
+          description: 0, not approved; 1, approved.
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return handle request successful.
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+  /v1/services/authorizations/{authorization_id}:
+    get:
+      summary: Get authorization by authorization_id.
+      description: |
+        This endpoint gets authorization by authorization_id.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: authorization_id
+          in: path
+          type: integer
+          format: int32
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return successful.
+          schema:
+            $ref: '#/definitions/Authorization'
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+    delete:
+      summary: Delete the applying for access to services.
+      description: |
+        This endpoint delete the applying for access to services.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: authorization_id
+          in: path
+          type: integer
+          format: int32
+      tags:
+        - Products
+      responses:
+        200:
+          description: Delete successful.
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+  /v1/services/authorizations/{authorization_id}/billing:
+    get:
+      summary: Get billing of authorization by authorization_id.
+      description: |
+        This endpoint gets billing of authorization by authorization_id.
+      parameters:
+        - name: token
+          in: header
+          type: string
+          required: true
+          description: Current available token.
+        - name: authorization_id
+          in: path
+          type: integer
+          format: int32
+        - name: timestamp_start
+          in: query
+          type: string
+        - name: timestamp_end
+          in: query
+          type: string
+      tags:
+        - Products
+      responses:
+        200:
+          description: Return successful.
+        401:
+          description: User need to log in first.
+        500:
+          description: Internal errors. 
+  /v1/gateway/token:
+    get:
+      summary: Get gateway token by client id and client key.
+      description: |
+        Get gateway token by client id and client key. 
+      parameters:
+        - name: client_id
+          in: query
+          type: string
+        - name: client_key
+          in: query
+          type: string
+      tags:
+        - Products
+      responses:
+        200:
+          description: Get gateway token successfully.
+          schema:
+            $ref: '#/definitions/Token'
+        500:
+          description: Unexpected internal error.
+
+# The following is for structure definition          
+definitions:
+  UserLogin:
+    type: object
+    properties:
+      name:
+        type: string
+        description: The name of user.
+      password:
+        type: string
+        description: The password of user.
+  Token:
+    type: object
+    properties:
+      token:
+        type: string
+        description: Current available token.
+  UserDetail:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: The integer ID of this user.
+      name:
+        type: string
+      password:
+        type: string
+      confirm_password:
+        type: string
+  ServiceDetail:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: The integer ID of this service.
+      name:
+        type: string
+        description: The name of this service.
+      url:
+        type: string
+        description: The url of this service.
+      host:
+        type: string
+        description: The host of this service.
+      port:
+        type: integer
+        format: int32
+        description: The port of this service.
+      context:
+        type: string
+        description: The context of this service.
+      external:
+        type: boolean
+        description: The external flag of this service.
+      external_app_name:
+        type: string
+        description: The external app name of this service.
+      owner_id:
+        type: integer
+        format: int32
+        description: The owner ID of the service always means the creator of the service.
+  Authorization:
+    type: object
+    properties:
+      client_id:
+        type: string
+        description: The integer ID of this service.
+      client_key:
+        type: string
+        description: The key of this service.
+  AuthorizationRequest:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int32
+        description: The integer ID of this authorization request.
+      service_id:
+        type: integer
+        format: int32
+        description: The integer ID of service.
+      service_name:
+        type: string
+        description: The name of this service.
+      service_url:
+        type: string
+        description: The url of this service.
+      service_method:
+        type: string
+        description: The method of this service.
+      request_user_name:
+        type: string
+        description: The user name of this service.
+      authorization_id:
+        type: integer
+        format: int32
+        description: The integer ID of this authorization information.
+      request_status:
+        type: integer
+        format: int32
+        description: 1, applying; 2, approved; 3, disagree; 4, delete.
